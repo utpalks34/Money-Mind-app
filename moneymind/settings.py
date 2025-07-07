@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import dj_database_url
+from pathlib import Path
 
 
 load_dotenv()
@@ -30,7 +32,8 @@ SECRET_KEY = 'django-insecure-e0(=q+eh9jl3-i72(vmrx10#3wn9jrjct0ogxhqf^1(kqo_3#%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+
 
 
 # Application definition
@@ -80,10 +83,7 @@ WSGI_APPLICATION = 'moneymind.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(default='sqlite:///db.sqlite3')
 }
 
 
@@ -121,15 +121,33 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Static files (CSS, JS)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR/'static']
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # For Render
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # Your local /static folder
 
+# Media files (User uploads)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Auth Redirects
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Whitenoise for production
+MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # ... your other middleware ...
+]
+
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
