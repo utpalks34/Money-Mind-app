@@ -1,0 +1,213 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Mood Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Mood Tracker</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMoodModal">
+            Log New Mood
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Mood Chart -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Mood Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="moodChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Moods -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Recent Mood Logs</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for mood in moods %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ mood.get_mood_display }}</h6>
+                            <small class="text-muted">{{ mood.date|date:"M d, Y" }}</small>
+                        </div>
+                        {% if mood.note %}
+                        <p class="mb-1">{{ mood.note }}</p>
+                        {% endif %}
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-primary me-2"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editMoodModal{{ mood.id }}">
+                                Edit
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteMoodModal{{ mood.id }}">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center">No mood logs yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Mood Modal -->
+<div class="modal fade" id="addMoodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log New Mood</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="mood" class="form-label">How are you feeling?</label>
+                        <select name="mood" id="mood" class="form-select" required>
+                            {% for choice in mood_choices %}
+                            <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Add a note (optional)</label>
+                        <textarea name="note" id="note" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" name="date" id="date" class="form-control" 
+                               value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Log Mood</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit & Delete Modals for each mood -->
+{% for mood in moods %}
+<!-- Edit Modal -->
+<div class="modal fade" id="editMoodModal{{ mood.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Mood Log</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'edit_mood' mood.id %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="mood{{ mood.id }}" class="form-label">How were you feeling?</label>
+                        <select name="mood" id="mood{{ mood.id }}" class="form-select" required>
+                            {% for choice in mood_choices %}
+                            <option value="{{ choice.0 }}" {% if mood.mood == choice.0 %}selected{% endif %}>
+                                {{ choice.1 }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="note{{ mood.id }}" class="form-label">Note</label>
+                        <textarea name="note" id="note{{ mood.id }}" 
+                                  class="form-control" rows="3">{{ mood.note }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date{{ mood.id }}" class="form-label">Date</label>
+                        <input type="date" name="date" id="date{{ mood.id }}" 
+                               class="form-control" value="{{ mood.date|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteMoodModal{{ mood.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Mood Log</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this mood log?</p>
+                <p><strong>Mood:</strong> {{ mood.get_mood_display }}</p>
+                <p><strong>Date:</strong> {{ mood.date|date:"M d, Y" }}</p>
+                {% if mood.note %}
+                <p><strong>Note:</strong> {{ mood.note }}</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'delete_mood' mood.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Mood Chart
+const moodCtx = document.getElementById('moodChart').getContext('2d');
+const moodData = {
+    labels: [{% for mood in moods reversed %}"{{ mood.date|date:'M d' }}",{% endfor %}],
+    datasets: [{
+        label: 'Mood',
+        data: [{% for mood in moods reversed %}{{ forloop.counter }},{% endfor %}],
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1
+    }]
+};
+
+const moodChart = new Chart(moodCtx, {
+    type: 'line',
+    data: moodData,
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        const moods = ['Neutral', 'Anxious', 'Stressed', 'Happy'];
+                        return moods[value - 1] || '';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

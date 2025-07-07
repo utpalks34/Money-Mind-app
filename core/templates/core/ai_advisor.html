@@ -1,0 +1,128 @@
+{% extends 'core/base.html' %}
+{% block title %}AI Financial Advisor{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>AI Financial Advisor</h2>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Ask AI Section -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Ask for Financial Advice</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="question" class="form-label">What would you like to know?</label>
+                        <textarea name="question" id="question" class="form-control" rows="4" placeholder="Example: Can I afford a new phone worth ₹30,000?" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-muted">Our AI will analyze your:</p>
+                        <ul class="text-muted">
+                            <li>Current savings and income</li>
+                            <li>Monthly spending patterns</li>
+                            <li>Existing debts and commitments</li>
+                            <li>Financial goals and priorities</li>
+                        </ul>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Get Advice</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advice History -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Previous Advice</h5>
+            </div>
+            <div class="card-body">
+                {% if advice_history %}
+                <div class="list-group">
+                    {% for advice in advice_history %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="mb-1">{{ advice.question|truncatechars:50 }}</h6>
+                            <small class="text-muted">{{ advice.created_at|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mb-1">{{ advice.response }}</p>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAdviceModal{{ advice.id }}">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center">No previous advice history.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Summary -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Your Financial Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted">Monthly Income</h6>
+                        <h3>₹{{ user_profile.income }}</h3>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted">Current Savings</h6>
+                        <h3>₹{{ user_profile.savings }}</h3>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted">Total Debt</h6>
+                        <h3>₹{{ total_debt }}</h3>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted">Monthly Expenses</h6>
+                        <h3>₹{{ monthly_expenses }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modals -->
+{% for advice in advice_history %}
+<div class="modal fade" id="deleteAdviceModal{{ advice.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Advice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this advice?</p>
+                <p><strong>Question:</strong> {{ advice.question }}</p>
+                <p><strong>Date:</strong> {{ advice.created_at|date:"M d, Y" }}</p>
+            </div>
+            <div class="modal-footer">
+                <form method="post" action="{% url 'delete_advice' advice.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

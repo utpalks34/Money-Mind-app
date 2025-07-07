@@ -1,0 +1,178 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Profile Settings</h2>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Personal Information -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'update_profile' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" id="username" class="form-control" 
+                               value="{{ user.username }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="monthly_income" class="form-label">Monthly Income</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" step="0.01" name="monthly_income" 
+                                   id="monthly_income" class="form-control" 
+                                   value="{{ profile.monthly_income }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="current_savings" class="form-label">Current Savings</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" step="0.01" name="current_savings" 
+                                   id="current_savings" class="form-control" 
+                                   value="{{ profile.current_savings }}" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Financial Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Monthly Overview</h6>
+                    <div class="progress mb-2" style="height: 20px;">
+                        {% with expense_percentage=monthly_expenses|div:profile.monthly_income|mul:100 %}
+                        <div class="progress-bar {% if expense_percentage > 80 %}bg-danger
+                                                {% elif expense_percentage > 60 %}bg-warning
+                                                {% else %}bg-success{% endif %}" 
+                             role="progressbar" style="width: {{ expense_percentage }}%">
+                            {{ expense_percentage|floatformat:1 }}%
+                        </div>
+                        {% endwith %}
+                    </div>
+                    <small class="text-muted">Monthly expenses as percentage of income</small>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Debt Overview</h6>
+                    <div class="progress mb-2" style="height: 20px;">
+                        {% with debt_percentage=total_debt|div:profile.monthly_income|mul:100 %}
+                        <div class="progress-bar {% if debt_percentage > 100 %}bg-danger
+                                                {% elif debt_percentage > 50 %}bg-warning
+                                                {% else %}bg-success{% endif %}" 
+                             role="progressbar" style="width: {{ debt_percentage }}%">
+                            {{ debt_percentage|floatformat:1 }}%
+                        </div>
+                        {% endwith %}
+                    </div>
+                    <small class="text-muted">Total debt as percentage of monthly income</small>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Savings Rate</h6>
+                    <div class="progress mb-2" style="height: 20px;">
+                        {% with savings_rate=profile.current_savings|div:profile.monthly_income|mul:100 %}
+                        <div class="progress-bar {% if savings_rate < 10 %}bg-danger
+                                                {% elif savings_rate < 20 %}bg-warning
+                                                {% else %}bg-success{% endif %}" 
+                             role="progressbar" style="width: {{ savings_rate }}%">
+                            {{ savings_rate|floatformat:1 }}%
+                        </div>
+                        {% endwith %}
+                    </div>
+                    <small class="text-muted">Current savings as percentage of monthly income</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Account Settings -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Account Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Change Password</h6>
+                        <form method="post" action="{% url 'change_password' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="current_password" class="form-label">Current Password</label>
+                                <input type="password" name="current_password" 
+                                       id="current_password" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new_password1" class="form-label">New Password</label>
+                                <input type="password" name="new_password1" 
+                                       id="new_password1" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new_password2" class="form-label">Confirm New Password</label>
+                                <input type="password" name="new_password2" 
+                                       id="new_password2" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Change Password</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Delete Account</h6>
+                        <p class="text-muted">Warning: This action cannot be undone. All your data will be permanently deleted.</p>
+                        <button type="button" class="btn btn-danger" 
+                                data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+                <form method="post" action="{% url 'delete_account' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Enter your password to confirm</label>
+                        <input type="password" name="confirm_password" 
+                               id="confirm_password" class="form-control" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Delete Account</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
