@@ -1,0 +1,11 @@
+[33mcommit 30818dacc503a325f335f37b6c50ae0ca2ce3eab[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: utpalks34 <utpalksharma156@gmail.com>
+Date:   Mon Jul 7 20:41:15 2025 +0530
+
+    Remove .env with secrets and add to .gitignore
+
+[33mcommit e87a55f11e3b3d7943456d831992b2c21b280bbe[m
+Author: utpalks34 <utpalksharma156@gmail.com>
+Date:   Mon Jul 7 20:31:38 2025 +0530
+
+    Initial commit of Money Mind app
