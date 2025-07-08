@@ -261,6 +261,18 @@ def delete_advice_view(request, id):
 @login_required
 def profile_view(request):
     profile = request.user.userprofile
+    income = profile.income or 0
+    savings = profile.savings or 0
+
+    # Total expenses this month
+    monthly_expenses = Expense.objects.filter(user=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
+    total_debt = Debt.objects.filter(user=request.user, is_paid=False).aggregate(Sum('amount'))['amount__sum'] or 0
+
+    # Avoid division by zero
+    expense_percentage = round((monthly_expenses / income) * 100, 1) if income > 0 else 0
+    debt_percentage = round((total_debt / income) * 100, 1) if income > 0 else 0
+    savings_rate = round((savings / income) * 100, 1) if income > 0 else 0
+
     if request.method == 'POST':
         form = UserProfileForm(request.POST, instance=profile)
         if form.is_valid():
@@ -269,7 +281,17 @@ def profile_view(request):
             return redirect('profile')
     else:
         form = UserProfileForm(instance=profile)
-    return render(request, 'core/profile.html', {'form': form})
+
+    return render(request, 'core/profile.html', {
+        'form': form,
+        'profile': profile,
+        'monthly_expenses': monthly_expenses,
+        'total_debt': total_debt,
+        'expense_percentage': expense_percentage,
+        'debt_percentage': debt_percentage,
+        'savings_rate': savings_rate,
+    })
+
 
 
 # Change password view
